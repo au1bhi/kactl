@@ -2,6 +2,7 @@
 % License: CC0
 \ProvidesPackage{kactlpkg}
 
+\usepackage{CJKutf8}
 \usepackage[utf8]{inputenc}             % Encoding UTF-8
 \usepackage{listings}                   % Source code listings
 \usepackage{framed}                     % Source code listings
@@ -222,10 +223,12 @@
 		\strut % Magic
 		\vspace{3cm}\\
 		\includegraphics[width=3cm]{\@unilogo}\\
+		\begin{CJK*}{UTF8}{gbsn}
 		{\fontsize{25}{30}\selectfont \@unilong\\}
 		{\fontsize{60}{60}\selectfont \@teamname\\}
 		\vspace{0.5cm}
 		{\huge \@teammembers\\}
+		\end{CJK*}
 		\vfill
 		{\fontsize{21}{25}\selectfont \@contestname}\\
 		\vspace{0.5cm}
