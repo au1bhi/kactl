@@ -1,93 +1,67 @@
 /**
- * Author: Team
- * Date: 2026-05-28
+ * Author: chilli
+ * Date: 2019-04-26
  * License: CC0
- * Description: Dinic's algorithm for finding the Maximum Flow in a network.
- * Time: O(N^2 M) in general, O(M \sqrt{N}) for bipartite matching.
- * Status: tested
+ * Source: https://cp-algorithms.com/graph/dinic.html
+ * Description: Flow algorithm with complexity $O(VE\log U)$ where $U = \max |\text{cap}|$.
+ * $O(\min(E^{1/2}, V^{2/3})E)$ if $U = 1$; $O(\sqrt{V}E)$ for bipartite matching.
+ * Status: Tested on SPOJ FASTFLOW and SPOJ MATCHING, stress-tested
  */
 #pragma once
 
-template <typename T = long long>
 struct Dinic
 {
-    struct Edge
-    {
-        int to;
-        T cap;
-    };
-    int n;
-    vector<Edge> edges;
-    vector<vector<int>> g;
-    vector<int> d, cur;
-
-    Dinic(int n_nodes) : n(n_nodes + 1), g(n_nodes + 1) {}
-
-    void add(int u, int v, T cap)
-    {
-        g[u].push_back(edges.size());
-        edges.push_back({v, cap});
-        g[v].push_back(edges.size());
-        edges.push_back({u, 0});
-    }
-
-    bool bfs(int s, int t)
-    {
-        d.assign(n, -1);
-        d[s] = 0;
-        queue<int> q;
-        q.push(s);
-        while (!q.empty())
-        {
-            int u = q.front();
-            q.pop();
-            for (int id : g[u])
-            {
-                auto &[v, cap] = edges[id];
-                if (cap > 0 && d[v] == -1)
-                {
-                    d[v] = d[u] + 1;
-                    if (v == t)
-                        return true;
-                    q.push(v);
-                }
-            }
-        }
-        return false;
-    }
-
-    T dfs(int u, int t, T flow)
-    {
-        if (u == t)
-            return flow;
-        T pushed = 0;
-        for (int &i = cur[u]; i < g[u].size(); ++i)
-        {
-            int id = g[u][i];
-            auto &[v, cap] = edges[id];
-            if (cap > 0 && d[v] == d[u] + 1)
-            {
-                T tr = dfs(v, t, min(flow - pushed, cap));
-                if (tr == 0)
-                    continue;
-                cap -= tr;
-                edges[id ^ 1].cap += tr;
-                pushed += tr;
-                if (pushed == flow)
-                    return pushed;
-            }
-        }
-        return pushed;
-    }
-
-    T max_flow(int s, int t)
-    {
-        T total_flow = 0;
-        while (bfs(s, t))
-        {
-            cur.assign(n, 0);
-            total_flow += dfs(s, t, inf);
-        }
-        return total_flow;
-    }
+	struct Edge
+	{
+		int to, rev;
+		ll c, oc;
+		ll flow() { return max(oc - c, 0LL); } // if you need flows
+	};
+	vi lvl, ptr, q;
+	vector<vector<Edge>> adj;
+	Dinic(int n) : lvl(n), ptr(n), q(n), adj(n) {}
+	void addEdge(int a, int b, ll c, ll rcap = 0)
+	{
+		adj[a].push_back({b, sz(adj[b]), c, c});
+		adj[b].push_back({a, sz(adj[a]) - 1, rcap, rcap});
+	}
+	ll dfs(int v, int t, ll f)
+	{
+		if (v == t || !f)
+			return f;
+		for (int &i = ptr[v]; i < sz(adj[v]); i++)
+		{
+			Edge &e = adj[v][i];
+			if (lvl[e.to] == lvl[v] + 1)
+				if (ll p = dfs(e.to, t, min(f, e.c)))
+				{
+					e.c -= p, adj[e.to][e.rev].c += p;
+					return p;
+				}
+		}
+		return 0;
+	}
+	ll calc(int s, int t)
+	{
+		ll flow = 0;
+		q[0] = s;
+		rep(L, 0, 31) do
+		{ // 'int L=30' maybe faster for random data
+			lvl = ptr = vi(sz(q));
+			int qi = 0, qe = lvl[s] = 1;
+			while (qi < qe && !lvl[t])
+			{
+				int v = q[qi++];
+				for (Edge e : adj[v])
+					if (!lvl[e.to] && e.c >> (30 - L))
+						q[qe++] = e.to, lvl[e.to] = lvl[v] + 1;
+			}
+			while (ll p = dfs(s, t, LLONG_MAX))
+				flow += p;
+		}
+		while (lvl[t])
+			;
+		return flow;
+	}
+	bool leftOfMinCut(int a) { return lvl[a] != 0; }
 };

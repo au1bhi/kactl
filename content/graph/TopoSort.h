@@ -1,8 +1,9 @@
 /**
- * Author: Team
+ * Author: KACTL, Team
  * Date: 2026-05-28
  * License: CC0
- * Description: Topological sort. Returns the order and a boolean indicating if it is a DAG.
+ * Description: Topological sort. Uses vector-as-queue trick for extreme speed.
+ * Returns {order, is-DAG}.
  * Time: O(N + M)
  * Status: tested
  */
@@ -11,31 +12,25 @@
 
 pair<vector<int>, bool> topo_sort(const Graph &g)
 {
-    vector<int> in_degree(g.n + 1, 0);
+    vector<int> indeg(g.n + 1, 0), q;
     for (int i = 1; i <= g.n; ++i)
     {
         for (auto [v, w] : g.adj[i])
-        {
-            in_degree[v]++;
-        }
+            indeg[v]++;
     }
-    queue<int> q;
     for (int i = 1; i <= g.n; ++i)
     {
-        if (in_degree[i] == 0)
-            q.push(i);
+        if (indeg[i] == 0)
+            q.push_back(i);
     }
-    vector<int> res;
-    while (!q.empty())
+    // Vector-as-queue trick: j is the head, q.size() is the tail
+    for (int j = 0; j < (int)q.size(); ++j)
     {
-        int u = q.front();
-        q.pop();
-        res.push_back(u);
-        for (auto [v, w] : g.adj[u])
+        for (auto [v, w] : g.adj[q[j]])
         {
-            if (--in_degree[v] == 0)
-                q.push(v);
+            if (--indeg[v] == 0)
+                q.push_back(v);
         }
     }
-    return {res, (int)res.size() == g.n};
+    return {q, (int)q.size() == g.n};
 }
