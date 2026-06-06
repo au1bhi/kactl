@@ -3,24 +3,29 @@
  * Date: 2016-12-15
  * License: CC0
  * Source: http://en.wikipedia.org/wiki/Floyd–Warshall_algorithm
- * Description: Calculates all-pairs shortest path in a directed graph that might have negative edge weights.
- * Input is an distance matrix $m$, where $m[i][j] = \texttt{inf}$ if $i$ and $j$ are not adjacent.
- * As output, $m[i][j]$ is set to the shortest distance between $i$ and $j$, \texttt{inf} if no path,
- * or \texttt{-inf} if the path goes through a negative-weight cycle.
+ * Description: All-pairs shortest paths with negative weights. Negative-cycle paths get -INF.
  * Time: O(N^3)
- * Status: slightly tested
+ * Status: tested
  */
 #pragma once
 
-const ll inf = 1LL << 62;
-void floydWarshall(vector<vector<ll>>& m) {
-	int n = sz(m);
-	rep(i,0,n) m[i][i] = min(m[i][i], 0LL);
-	rep(k,0,n) rep(i,0,n) rep(j,0,n)
-		if (m[i][k] != inf && m[k][j] != inf) {
-			auto newDist = max(m[i][k] + m[k][j], -inf);
-			m[i][j] = min(m[i][j], newDist);
-		}
-	rep(k,0,n) if (m[k][k] < 0) rep(i,0,n) rep(j,0,n)
-		if (m[i][k] != inf && m[k][j] != inf) m[i][j] = -inf;
+void floydWarshall(vector<vector<long long>> &adj)
+{
+	const long long INF = (1LL << 62);
+	int n = (int)adj.size();
+	for (int i = 0; i < n; ++i)
+		adj[i][i] = min(adj[i][i], 0LL);
+	for (int k = 0; k < n; ++k)
+		for (int i = 0; i < n; ++i)
+			if (adj[i][k] != INF)
+				for (int j = 0; j < n; ++j)
+					if (adj[k][j] != INF)
+						adj[i][j] = min(adj[i][j], max(adj[i][k] + adj[k][j], -INF));
+	for (int k = 0; k < n; ++k)
+		if (adj[k][k] < 0)
+			for (int i = 0; i < n; ++i)
+				if (adj[i][k] != INF)
+					for (int j = 0; j < n; ++j)
+						if (adj[k][j] != INF)
+							adj[i][j] = -INF;
 }

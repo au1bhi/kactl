@@ -2,19 +2,18 @@
  * Author: Team
  * Date: 2026-06-06
  * License: CC0
- * Description: Prim's algorithm for Minimum Spanning Tree on dense graphs.
+ * Description: Dijkstra on dense graphs using adjacency matrix.
  * Time: O(N^2)
  * Status: tested
  */
 #pragma once
 
-pair<long long, bool> prim(int n, const vector<vector<long long>> &adj)
+vector<long long> naiveDijkstra(int n, int s, const vector<vector<long long>> &adj)
 {
 	const long long INF = (1LL << 62);
 	vector<long long> dist(n + 1, INF);
 	vector<bool> used(n + 1, false);
-	dist[1] = 0;
-	long long total = 0;
+	dist[s] = 0;
 	for (int it = 1; it <= n; ++it)
 	{
 		int u = -1;
@@ -22,12 +21,11 @@ pair<long long, bool> prim(int n, const vector<vector<long long>> &adj)
 			if (!used[i] && (u == -1 || dist[i] < dist[u]))
 				u = i;
 		if (u == -1 || dist[u] == INF)
-			return {total, false};
+			break;
 		used[u] = true;
-		total += dist[u];
 		for (int v = 1; v <= n; ++v)
-			if (!used[v] && adj[u][v] < dist[v])
-				dist[v] = adj[u][v];
+			if (adj[u][v] != INF && dist[u] + adj[u][v] < dist[v])
+				dist[v] = dist[u] + adj[u][v];
 	}
-	return {total, true};
+	return dist;
 }

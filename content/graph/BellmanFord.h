@@ -3,34 +3,46 @@
  * Date: 2015-02-23
  * License: CC0
  * Source: http://en.wikipedia.org/wiki/Bellman-Ford_algorithm
- * Description: Calculates shortest paths from $s$ in a graph that might have negative edge weights.
- * Unreachable nodes get dist = inf; nodes reachable through negative-weight cycles get dist = -inf.
- * Assumes $V^2 \max |w_i| < \tilde{} 2^{63}$.
+ * Description: Shortest paths with negative weights. Negative-cycle reachable nodes get -INF.
  * Time: O(VE)
- * Status: Tested on kattis:shortestpath3
+ * Status: tested
  */
 #pragma once
 
-const ll inf = LLONG_MAX;
-struct Ed { int a, b, w, s() { return a < b ? a : -a; }};
-struct Node { ll dist = inf; int prev = -1; };
+struct Edge
+{
+	int u, v;
+	long long w;
+};
 
-void bellmanFord(vector<Node>& nodes, vector<Ed>& eds, int s) {
-	nodes[s].dist = 0;
-	sort(all(eds), [](Ed a, Ed b) { return a.s() < b.s(); });
-
-	int lim = sz(nodes) / 2 + 2; // /3+100 with shuffled vertices
-	rep(i,0,lim) for (Ed ed : eds) {
-		Node cur = nodes[ed.a], &dest = nodes[ed.b];
-		if (abs(cur.dist) == inf) continue;
-		ll d = cur.dist + ed.w;
-		if (d < dest.dist) {
-			dest.prev = ed.a;
-			dest.dist = (i < lim-1 ? d : -inf);
+vector<long long> bellmanFord(int n, int s, const vector<Edge> &edges)
+{
+	const long long INF = (1LL << 62);
+	vector<long long> dist(n + 1, INF);
+	dist[s] = 0;
+	for (int i = 1; i < n; ++i)
+	{
+		bool any = false;
+		for (const auto &e : edges)
+		{
+			if (dist[e.u] == INF || dist[e.u] == -INF)
+				continue;
+			if (dist[e.u] + e.w < dist[e.v])
+			{
+				dist[e.v] = dist[e.u] + e.w;
+				any = true;
+			}
 		}
+		if (!any)
+			break;
 	}
-	rep(i,0,lim) for (Ed e : eds) {
-		if (nodes[e.a].dist == -inf)
-			nodes[e.b].dist = -inf;
-	}
+	for (int i = 1; i <= n; ++i)
+		for (const auto &e : edges)
+		{
+			if (dist[e.u] == -INF)
+				dist[e.v] = -INF;
+			else if (dist[e.u] != INF && dist[e.u] + e.w < dist[e.v])
+				dist[e.v] = -INF;
+		}
+	return dist;
 }

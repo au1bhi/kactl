@@ -63,13 +63,8 @@
 \section{Optimization tricks}
 	\verb@__builtin_ia32_ldmxcsr(40896);@ disables denormals (makes floats 20x faster near minimum value).
 	
-	\subsection{Bit hacks}
-		\begin{itemize}
-			\item \verb@x & -x@ is the least bit in \texttt{x}.
-			\item \verb@for (int x = m; x; ) { --x &= m; ... }@ loops over all subset masks of \texttt{m} (except \texttt{m} itself).
-			\item \verb@rep(b,0,K) rep(i,0,(1 << K)) if (i & 1 << b) D[i] += D[i^(1 << b)];@ SOS DP (Sum Over Subsets).
-		\end{itemize}
-		
+	\kactlimport{BitHacks.h}	
+	
 	\subsection{Pragmas}
 		\begin{itemize}
 			\item \lstinline{#pragma GCC optimize ("Ofast")} will make GCC auto-vectorize loops and optimize floating points.

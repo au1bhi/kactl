@@ -7,35 +7,29 @@
  * Status: tested
  */
 #pragma once
-#include "Graph.h"
+#include "../data-structures/UnionFind.h"
 
-pair<int, bool> kruskal(Graph &g)
+struct Edge
 {
-    sort(g.edges.begin(), g.edges.end(), [](auto &a, auto &b)
-         { return get<2>(a) < get<2>(b); });
-    struct LocalDSU
-    {
-        vector<int> p;
-        LocalDSU(int n) : p(n + 1) { iota(p.begin(), p.end(), 0); }
-        int find(int x) { return p[x] == x ? x : p[x] = find(p[x]); }
-        bool merge(int u, int v)
-        {
-            int x = find(u), y = find(v);
-            if (x == y)
-                return false;
-            p[y] = x;
-            return true;
-        }
-    } dsu(g.n);
+	int u, v;
+	long long w;
+};
 
-    int total_weight = 0, comp = g.n;
-    for (auto [u, v, w] : g.edges)
-    {
-        if (dsu.merge(u, v))
-        {
-            total_weight += w;
-            --comp;
-        }
-    }
-    return {total_weight, comp == 1};
+pair<long long, bool> kruskal(int n, const vector<Edge> &edges)
+{
+	vector<Edge> es = edges;
+	sort(es.begin(), es.end(), [](const Edge &a, const Edge &b)
+	     { return a.w < b.w; });
+	DSU dsu(n);
+	long long total = 0;
+	int used = 0;
+	for (const auto &e : es)
+	{
+		if (dsu.merge(e.u, e.v))
+		{
+			total += e.w;
+			++used;
+		}
+	}
+	return {total, used == n - 1};
 }
