@@ -1,122 +1,102 @@
 /**
  * Author: Team
- * Date: 2026-05-28
+ * Date: 2026-06-06
  * License: CC0
- * Description: Comprehensive tree analyzer. Computes tree diameter, radius, center, and centroid in O(N).
+ * Description: Functions for a 1-indexed tree: weighted diameter endpoints, weighted radius/center, and unweighted centroid.
+ * Usage:
+ *   vector<vector<pair<int, long long>>> adj(n + 1);
+ *   auto [diam, ends] = tree_diameter(adj);
+ *   auto [radius, center] = tree_radius_center(adj);
+ *   int centroid = tree_centroid(unweighted_adj);
  * Time: O(N)
  * Status: tested
  */
 #pragma once
 
-struct Tree
+pair<long long, pair<int, int>> tree_diameter(const vector<vector<pair<int, long long>>> &adj, int root = 1)
 {
-    int n;
-    vector<vector<pii>> e;
-    int diam = 0, radius = inf, center = 0;
-    vector<int> d1, d2, up, s1;
+	int n = (int)adj.size() - 1;
+	vector<long long> dist(n + 1, 0);
+	auto dfs = [&](auto &&self, int u, int p) -> void
+	{
+		for (auto [v, w] : adj[u])
+		{
+			if (v == p)
+				continue;
+			dist[v] = dist[u] + w;
+			self(self, v, u);
+		}
+	};
+	dfs(dfs, root, 0);
+	int a = root;
+	for (int i = 1; i <= n; ++i)
+		if (dist[i] > dist[a])
+			a = i;
+	fill(dist.begin(), dist.end(), 0);
+	dfs(dfs, a, 0);
+	int b = a;
+	for (int i = 1; i <= n; ++i)
+		if (dist[i] > dist[b])
+			b = i;
+	return {dist[b], {a, b}};
+}
 
-    int cog = 0, rem_max_sz = inf;
-    vector<int> sz;
+pair<long long, int> tree_radius_center(const vector<vector<pair<int, long long>>> &adj, int root = 1)
+{
+	int n = (int)adj.size() - 1;
+	auto [diam, ends] = tree_diameter(adj, root);
+	auto [a, b] = ends;
+	vector<long long> da(n + 1, 0), db(n + 1, 0);
+	auto dfs = [&](auto &&self, int u, int p, vector<long long> &dist) -> void
+	{
+		for (auto [v, w] : adj[u])
+		{
+			if (v == p)
+				continue;
+			dist[v] = dist[u] + w;
+			self(self, v, u, dist);
+		}
+	};
+	dfs(dfs, a, 0, da);
+	dfs(dfs, b, 0, db);
+	long long radius = diam;
+	int center = a;
+	for (int i = 1; i <= n; ++i)
+	{
+		long long cur = max(da[i], db[i]);
+		if (cur < radius)
+		{
+			radius = cur;
+			center = i;
+		}
+	}
+	return {radius, center};
+}
 
-    Tree(int n) : n(n), e(n + 1) {}
-
-    void add(int u, int v, int w = 1)
-    {
-        e[u].push_back({v, w});
-        e[v].push_back({u, w});
-    }
-
-    void _dfs1(int u, int fa)
-    {
-        for (auto [v, w] : e[u])
-        {
-            if (v == fa)
-                continue;
-            _dfs1(v, u);
-            int val = d1[v] + w;
-            if (val > d1[u])
-            {
-                d2[u] = d1[u];
-                d1[u] = val;
-                s1[u] = v;
-            }
-            else if (val > d2[u])
-            {
-                d2[u] = val;
-            }
-        }
-    }
-
-    void _dfs2(int u, int fa)
-    {
-        for (auto [v, w] : e[u])
-        {
-            if (v == fa)
-                continue;
-            if (s1[u] == v)
-            {
-                up[v] = max(up[u], d2[u]) + w;
-            }
-            else
-            {
-                up[v] = max(up[u], d1[u]) + w;
-            }
-            _dfs2(v, u);
-        }
-    }
-
-    // Computes tree diameter, radius, and center
-    void get_diam_info(int root = 1)
-    {
-        d1.assign(n + 1, 0);
-        d2.assign(n + 1, 0);
-        up.assign(n + 1, 0);
-        s1.assign(n + 1, 0);
-        diam = 0;
-        radius = inf;
-        center = 0;
-
-        _dfs1(root, 0);
-        _dfs2(root, 0);
-
-        for (int i = 1; i <= n; ++i)
-        {
-            diam = max(diam, d1[i] + up[i]);
-            int current_rad = max(d1[i], up[i]);
-            if (current_rad < radius)
-            {
-                radius = current_rad;
-                center = i;
-            }
-        }
-    }
-
-    void _dfs_cog(int u, int fa)
-    {
-        sz[u] = 1;
-        int max_child_sz = 0;
-        for (auto [v, w] : e[u])
-        {
-            if (v == fa)
-                continue;
-            _dfs_cog(v, u);
-            sz[u] += sz[v];
-            max_child_sz = max(max_child_sz, sz[v]);
-        }
-        int max_sz = max(max_child_sz, n - sz[u]);
-        if (max_sz < rem_max_sz)
-        {
-            rem_max_sz = max_sz;
-            cog = u;
-        }
-    }
-
-    // Finds the tree centroid (cog)
-    void get_cog_info(int root = 1)
-    {
-        sz.assign(n + 1, 0);
-        rem_max_sz = inf;
-        cog = 0;
-        _dfs_cog(root, 0);
-    }
-};
+int tree_centroid(const vector<vector<int>> &adj, int root = 1)
+{
+	int n = (int)adj.size() - 1;
+	vector<int> sub(n + 1, 0);
+	int centroid = root, best = n;
+	auto dfs = [&](auto &&self, int u, int p) -> void
+	{
+		sub[u] = 1;
+		int mx = 0;
+		for (int v : adj[u])
+		{
+			if (v == p)
+				continue;
+			self(self, v, u);
+			sub[u] += sub[v];
+			mx = max(mx, sub[v]);
+		}
+		mx = max(mx, n - sub[u]);
+		if (mx < best)
+		{
+			best = mx;
+			centroid = u;
+		}
+	};
+	dfs(dfs, root, 0);
+	return centroid;
+}
