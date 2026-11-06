@@ -12,11 +12,15 @@
 #include <bits/extc++.h> /** keep-include */
 // To use most bits rather than just the lowest ones:
 struct chash
-{ // large odd number for C
-	const uint64_t C = ll(4e18 * acos(0)) | 71;
-	ll operator()(ll x) const { return __builtin_bswap64(x * C); }
+{
+	const uint64_t C = (uint64_t)(4e18 * acos(0)) | 71;
+	uint64_t operator()(uint64_t x) const
+	{
+		return __builtin_bswap64(x * C);
+	}
 };
-__gnu_pbds::gp_hash_table<ll, int, chash> h({}, {}, {}, {}, {1 << 16});
+
+__gnu_pbds::gp_hash_table<uint64_t, int, chash> h({}, {}, {}, {}, {1 << 16});
 
 /** For CodeForces, or other places where hacking might be a problem:
 
